@@ -40,6 +40,20 @@ class RestaurantMenuItem {
       foodName: json['food_name']?.toString() ?? 'Unknown food',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'date': date.toIso8601String(),
+        'meal_type_id': mealTypeId,
+        'meal_type': mealType,
+        'meal_type_sort_order': mealTypeSortOrder,
+        'meal_hour_from': mealHourFrom,
+        'meal_hour_to': mealHourTo,
+        'course_type': courseType,
+        'course_sort_order': courseSortOrder,
+        'item_sort_order': itemSortOrder,
+        'food_name': foodName,
+      };
 }
 
 class MealTypeWindow {
@@ -72,6 +86,16 @@ class MealTypeWindow {
       isActive: json['is_active'] == null ? true : json['is_active'] == true,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'meal_type_id': mealTypeId,
+        'title': title,
+        'sort_order': sortOrder,
+        'hour_from': hourFrom,
+        'hour_to': hourTo,
+        'is_active': isActive,
+      };
 }
 
 class RestaurantMenuRange {
@@ -106,4 +130,15 @@ class RestaurantMenuRange {
           .toList(),
     );
   }
+
+  /// Mirrors the API response shape so a cached payload round-trips through
+  /// [RestaurantMenuRange.fromJson].
+  Map<String, dynamic> toJson() => {
+        'range': {
+          'start': startDate.toIso8601String(),
+          'end': endDate.toIso8601String(),
+        },
+        'meal_types': mealTypes.map((window) => window.toJson()).toList(),
+        'data': items.map((item) => item.toJson()).toList(),
+      };
 }

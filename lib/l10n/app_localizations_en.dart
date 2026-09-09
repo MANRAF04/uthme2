@@ -49,6 +49,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get lastGrade => 'last grade';
 
   @override
+  String lastUpdated(Object timestamp) {
+    return 'Last updated $timestamp';
+  }
+
+  @override
   String get logIn => 'Log in';
 
   @override
@@ -128,6 +133,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settings => 'Settings';
+
+  @override
+  String get showingSavedGrades => 'Showing saved grades';
+
+  @override
+  String get showingSavedMenu => 'Showing the saved menu';
 
   @override
   String subjectCount(int count) {

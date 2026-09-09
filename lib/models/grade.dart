@@ -40,4 +40,17 @@ class Grade {
           : null,
     );
   }
+
+  /// Mirrors the API field names so a cached payload round-trips through
+  /// [Grade.fromJson].
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'code': code,
+        'semester': semester,
+        'ects': ects,
+        'grade': grade,
+        'passed': passed,
+        'updated_at': updatedAt?.toIso8601String(),
+      };
 }

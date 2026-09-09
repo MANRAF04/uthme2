@@ -7,7 +7,9 @@ import '../l10n/app_localizations.dart';
 import '../models/restaurant.dart';
 import '../models/restaurant_menu.dart';
 import '../services/api_service.dart';
+import '../services/cache_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/saved_data_banner.dart';
 
 class RestaurantMenuScreen extends StatefulWidget {
   const RestaurantMenuScreen({super.key});
@@ -36,10 +38,13 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
   String? _selectedRestaurantId;
 
   DateTime _selectedDate = DateUtils.dateOnly(DateTime.now());
+  String? _loadedRestaurantId;
   DateTime? _loadedRangeStart;
   DateTime? _loadedRangeEnd;
   List<MealTypeWindow> _mealTypes = const [];
   Map<String, List<RestaurantMenuItem>> _menuByDate = const {};
+  DateTime? _menuFetchedAt;
+  bool _menuFromCache = false;
 
   AppLocalizations get _l10n => AppLocalizations.of(context);
   String get _localeName => Localizations.localeOf(context).toLanguageTag();
@@ -56,21 +61,32 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
       _errorMessage = null;
     });
 
+    final preferredRestaurant = await _readPreferredRestaurant();
+    final cached = await CacheService.readRestaurants();
+
+    // Saved list first: picker and menu stay usable with an unreachable server.
+    if (cached != null && cached.data.isNotEmpty) {
+      if (!mounted) return;
+      _applyRestaurants(cached.data, preferredRestaurant);
+      setState(() {
+        _isBootstrapping = false;
+      });
+
+      if (_selectedRestaurantId != null) {
+        await _loadMenuForDate(_selectedDate, forceReload: true);
+      }
+      await _refreshRestaurants();
+      return;
+    }
+
     try {
       final restaurants = await _api.fetchRestaurants();
-      final preferredRestaurant = await _readPreferredRestaurant();
-
-      String? selected;
-      if (preferredRestaurant != null &&
-          restaurants.any((r) => r.id == preferredRestaurant)) {
-        selected = preferredRestaurant;
+      if (restaurants.isNotEmpty) {
+        await CacheService.writeRestaurants(restaurants);
       }
 
       if (!mounted) return;
-      setState(() {
-        _restaurants = restaurants;
-        _selectedRestaurantId = selected;
-      });
+      _applyRestaurants(restaurants, preferredRestaurant);
 
       if (restaurants.isEmpty) {
         setState(() {
@@ -80,7 +96,7 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
         return;
       }
 
-      if (selected != null) {
+      if (_selectedRestaurantId != null) {
         await _loadMenuForDate(_selectedDate, forceReload: true);
       }
 
@@ -94,6 +110,38 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
         _errorMessage = _l10n.couldNotLoadRestaurants(e);
         _isBootstrapping = false;
       });
+    }
+  }
+
+  void _applyRestaurants(
+    List<UniversityRestaurant> restaurants,
+    String? preferredRestaurantId,
+  ) {
+    final selected = preferredRestaurantId != null &&
+            restaurants.any((r) => r.id == preferredRestaurantId)
+        ? preferredRestaurantId
+        : null;
+
+    setState(() {
+      _restaurants = restaurants;
+      _selectedRestaurantId = selected;
+    });
+  }
+
+  /// Brings the saved restaurant list up to date without disturbing the
+  /// screen. A failure changes nothing: the saved list still works.
+  Future<void> _refreshRestaurants() async {
+    try {
+      final restaurants = await _api.fetchRestaurants();
+      if (restaurants.isEmpty) return;
+
+      await CacheService.writeRestaurants(restaurants);
+      if (!mounted) return;
+      setState(() {
+        _restaurants = restaurants;
+      });
+    } catch (_) {
+      // Offline: the saved-menu banner already says so.
     }
   }
 
@@ -179,12 +227,7 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
 
     final normalizedDate = DateUtils.dateOnly(date);
 
-    final inLoadedRange = _loadedRangeStart != null &&
-        _loadedRangeEnd != null &&
-        !normalizedDate.isBefore(_loadedRangeStart!) &&
-        !normalizedDate.isAfter(_loadedRangeEnd!);
-
-    if (!forceReload && inLoadedRange) {
+    if (!forceReload && _isDateInLoadedRange(normalizedDate)) {
       setState(() {
         _selectedDate = normalizedDate;
       });
@@ -200,27 +243,51 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
       _menuErrorMessage = null;
     });
 
+    // Paint the saved week first, but only when it is the week being asked for.
+    final cached = await CacheService.readMenu(
+      restaurantId: restaurantId,
+      startDate: weekStart,
+      endDate: weekEnd,
+    );
+
+    if (cached != null && mounted) {
+      _applyMenu(
+        cached.data,
+        restaurantId: restaurantId,
+        fetchedAt: cached.fetchedAt,
+        fromCache: true,
+      );
+    }
+
     try {
       final response = await _api.fetchRestaurantMenu(
         restaurantId,
         startDate: weekStart,
         endDate: weekEnd,
       );
-
-      final grouped = groupBy(response.items, (item) => _dateKey(item.date));
+      await CacheService.writeMenu(
+        restaurantId: restaurantId,
+        startDate: weekStart,
+        endDate: weekEnd,
+        menu: response,
+      );
 
       if (!mounted) return;
-      setState(() {
-        _loadedRangeStart = DateUtils.dateOnly(response.startDate);
-        _loadedRangeEnd = DateUtils.dateOnly(response.endDate);
-        _mealTypes = response.mealTypes;
-        _menuByDate = grouped;
-      });
+      _applyMenu(
+        response,
+        restaurantId: restaurantId,
+        fetchedAt: DateTime.now(),
+        fromCache: false,
+      );
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _menuErrorMessage = _l10n.couldNotLoadMenu(e);
-      });
+      // With the saved week on screen the banner explains itself; an error
+      // message only helps when there is nothing to show.
+      if (cached == null) {
+        setState(() {
+          _menuErrorMessage = _l10n.couldNotLoadMenu(e);
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -230,10 +297,46 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
     }
   }
 
-  Future<void> _changeDay(int offset) async {
-    final nextDate = DateUtils.dateOnly(_selectedDate.add(Duration(days: offset)));
-    await _loadMenuForDate(nextDate);
+  void _applyMenu(
+    RestaurantMenuRange menu, {
+    required String restaurantId,
+    required DateTime? fetchedAt,
+    required bool fromCache,
+  }) {
+    setState(() {
+      _loadedRestaurantId = restaurantId;
+      _loadedRangeStart = DateUtils.dateOnly(menu.startDate);
+      _loadedRangeEnd = DateUtils.dateOnly(menu.endDate);
+      _mealTypes = menu.mealTypes;
+      _menuByDate = groupBy(menu.items, (item) => _dateKey(item.date));
+      _menuFetchedAt = fetchedAt;
+      _menuFromCache = fromCache;
+    });
   }
+
+  /// Whether the loaded payload actually covers what the screen is showing.
+  /// A payload from another restaurant never counts, so switching restaurants
+  /// cannot leave the previous one's food on screen.
+  bool _isDateInLoadedRange(DateTime date) {
+    final start = _loadedRangeStart;
+    final end = _loadedRangeEnd;
+    if (start == null || end == null) return false;
+    if (_loadedRestaurantId != _selectedRestaurantId) return false;
+
+    return !date.isBefore(start) && !date.isAfter(end);
+  }
+
+  Future<void> _changeDay(int offset) async {
+    await _loadMenuForDate(_dateAtOffset(offset));
+  }
+
+  DateTime _dateAtOffset(int offset) =>
+      DateUtils.dateOnly(_selectedDate.add(Duration(days: offset)));
+
+  /// While a reload is in flight only moves inside the loaded week are allowed,
+  /// so two fetches can never race to fill the same screen.
+  bool _canChangeDay(int offset) =>
+      !_isLoadingMenu || _isDateInLoadedRange(_dateAtOffset(offset));
 
   List<RestaurantMenuItem> _menuItemsForSelectedDate() {
     final items = List<RestaurantMenuItem>.from(
@@ -502,7 +605,9 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final selectedRestaurant =
         _restaurants.firstWhereOrNull((restaurant) => restaurant.id == _selectedRestaurantId);
-    final mealSections = _mealSectionsForSelectedDate();
+    final showsLoadedWeek = _isDateInLoadedRange(_selectedDate);
+    final mealSections =
+        showsLoadedWeek ? _mealSectionsForSelectedDate() : const <_MealSection>[];
 
     return Column(
       children: [
@@ -594,7 +699,7 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
             children: [
               _DayArrowButton(
                 icon: Icons.chevron_left,
-                onTap: _isLoadingMenu ? null : () => _changeDay(-1),
+                onTap: _canChangeDay(-1) ? () => _changeDay(-1) : null,
               ),
               Expanded(
                 child: Column(
@@ -619,7 +724,7 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
               ),
               _DayArrowButton(
                 icon: Icons.chevron_right,
-                onTap: _isLoadingMenu ? null : () => _changeDay(1),
+                onTap: _canChangeDay(1) ? () => _changeDay(1) : null,
               ),
             ],
           ),
@@ -628,7 +733,7 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
         // Menu error banner.
         if (_menuErrorMessage != null)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.coral.withValues(alpha: 0.10),
@@ -653,9 +758,20 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
                 ],
               ),
             ),
+          )
+        else if (_menuFromCache && showsLoadedWeek)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: SavedDataBanner(
+              title: _l10n.showingSavedMenu,
+              fetchedAt: _menuFetchedAt,
+              onRetry: _isLoadingMenu
+                  ? null
+                  : () => _loadMenuForDate(_selectedDate, forceReload: true),
+            ),
           ),
         Expanded(
-          child: _isLoadingMenu
+          child: _isLoadingMenu && !showsLoadedWeek
               ? const Center(child: CircularProgressIndicator())
               : mealSections.isEmpty
                   ? Center(
@@ -914,6 +1030,13 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
+        // The saved week is already on screen; the reload runs behind it.
+        bottom: _isLoadingMenu && _isDateInLoadedRange(_selectedDate)
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(2),
+                child: LinearProgressIndicator(minHeight: 2),
+              )
+            : null,
       ),
       body: SafeArea(child: body),
     );

@@ -10,16 +10,19 @@ class ApiService {
   static const String baseUrl = "https://manraf.duckdns.org:4242/api";
   static const Duration _pollInterval = Duration(milliseconds: 2500);
   static const Duration _pollTimeout = Duration(minutes: 2);
+  static const Duration _requestTimeout = Duration(seconds: 15);
 
   Future<List<Grade>> fetchGrades(String username, String password, {bool forceRefresh = false}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/get-grades'),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "username": username,
-        "password": password,
-        "force_refresh": forceRefresh,
-      }),
+    final response = await _timed(
+      http.post(
+        Uri.parse('$baseUrl/get-grades'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "username": username,
+          "password": password,
+          "force_refresh": forceRefresh,
+        }),
+      ),
     );
 
     if (response.statusCode != 200) {
@@ -46,7 +49,7 @@ class ApiService {
   }
 
   Future<List<UniversityRestaurant>> fetchRestaurants() async {
-    final response = await http.get(Uri.parse('$baseUrl/restaurants'));
+    final response = await _timed(http.get(Uri.parse('$baseUrl/restaurants')));
 
     if (response.statusCode != 200) {
       throw Exception(
@@ -75,7 +78,7 @@ class ApiService {
       },
     );
 
-    final response = await http.get(uri);
+    final response = await _timed(http.get(uri));
     if (response.statusCode != 200) {
       throw Exception(
         _extractErrorMessage(response.body, fallback: 'Failed to fetch restaurant menu.'),
@@ -91,14 +94,16 @@ class ApiService {
     required String password,
     required String restaurantId,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/user/preference'),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        'username': username,
-        'password': password,
-        'restaurant_id': restaurantId,
-      }),
+    final response = await _timed(
+      http.post(
+        Uri.parse('$baseUrl/user/preference'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          'username': username,
+          'password': password,
+          'restaurant_id': restaurantId,
+        }),
+      ),
     );
 
     if (response.statusCode != 200) {
@@ -114,7 +119,8 @@ class ApiService {
     while (DateTime.now().isBefore(deadline)) {
       await Future.delayed(_pollInterval);
 
-      final response = await http.get(Uri.parse('$baseUrl/task-status/$taskId'));
+      final response =
+          await _timed(http.get(Uri.parse('$baseUrl/task-status/$taskId')));
       if (response.statusCode != 200) {
         throw Exception('Task status request failed (${response.statusCode}).');
       }
@@ -134,6 +140,15 @@ class ApiService {
     }
 
     throw Exception('Timed out while fetching grades. Please try again.');
+  }
+
+  /// Hard ceiling on every request: a server that accepts the connection and
+  /// then hangs must fail fast, so callers can fall back to their cached copy.
+  Future<http.Response> _timed(Future<http.Response> request) {
+    return request.timeout(
+      _requestTimeout,
+      onTimeout: () => throw Exception('The server took too long to respond.'),
+    );
   }
 
   String _formatDate(DateTime date) {

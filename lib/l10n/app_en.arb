@@ -22,6 +22,12 @@
   "fetchingGrades": "Fetching your latest grades...",
   "languageLabel": "Language",
   "lastGrade": "last grade",
+  "lastUpdated": "Last updated {timestamp}",
+  "@lastUpdated": {
+    "placeholders": {
+      "timestamp": {}
+    }
+  },
   "logIn": "Log in",
   "loginFailed": "Login failed: {error}",
   "@loginFailed": {
@@ -63,6 +69,8 @@
   },
   "servingNow": "SERVING NOW",
   "settings": "Settings",
+  "showingSavedGrades": "Showing saved grades",
+  "showingSavedMenu": "Showing the saved menu",
   "subjectCount": "{count, plural, one{{count} subject} other{{count} subjects}}",
   "@subjectCount": {
     "placeholders": {

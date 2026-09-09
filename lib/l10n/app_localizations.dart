@@ -170,6 +170,12 @@ abstract class AppLocalizations {
   /// **'last grade'**
   String get lastGrade;
 
+  /// No description provided for @lastUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated {timestamp}'**
+  String lastUpdated(Object timestamp);
+
   /// No description provided for @logIn.
   ///
   /// In en, this message translates to:
@@ -313,6 +319,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get settings;
+
+  /// No description provided for @showingSavedGrades.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing saved grades'**
+  String get showingSavedGrades;
+
+  /// No description provided for @showingSavedMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing the saved menu'**
+  String get showingSavedMenu;
 
   /// No description provided for @subjectCount.
   ///

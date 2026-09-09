@@ -18,4 +18,10 @@ class UniversityRestaurant {
       city: json['city']?.toString() ?? '',
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'city': city,
+      };
 }

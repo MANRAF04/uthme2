@@ -14,6 +14,7 @@ import '../models/grade_stats.dart';
 import '../providers/average_mode_controller.dart';
 import '../widgets/widget_card.dart';
 import 'api_service.dart';
+import 'cache_service.dart';
 
 /// Top-level entry point invoked by home_widget when the widget is tapped.
 /// Must be a top-level/static function annotated for the background isolate.
@@ -79,6 +80,7 @@ class WidgetService {
       } on TaskCompletedException {
         grades = await _api.fetchGrades(username, password, forceRefresh: false);
       }
+      await CacheService.writeGrades(username, grades);
       final weighted = await readStoredWeightedMode();
       await _render(GradeStats.from(grades, weighted: weighted));
     } catch (_) {

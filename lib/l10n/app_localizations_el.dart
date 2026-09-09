@@ -50,6 +50,11 @@ class AppLocalizationsEl extends AppLocalizations {
   String get lastGrade => 'τελευταίος βαθμός';
 
   @override
+  String lastUpdated(Object timestamp) {
+    return 'Τελευταία ενημέρωση $timestamp';
+  }
+
+  @override
   String get logIn => 'Σύνδεση';
 
   @override
@@ -130,6 +135,12 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get settings => 'Ρυθμίσεις';
+
+  @override
+  String get showingSavedGrades => 'Εμφανίζονται αποθηκευμένοι βαθμοί';
+
+  @override
+  String get showingSavedMenu => 'Εμφανίζεται το αποθηκευμένο μενού';
 
   @override
   String subjectCount(int count) {

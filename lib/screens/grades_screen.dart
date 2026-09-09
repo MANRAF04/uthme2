@@ -7,9 +7,11 @@ import '../providers/average_mode_controller.dart';
 import '../providers/grades_provider.dart';
 import '../models/grade.dart';
 import '../models/grade_stats.dart';
+import '../services/cache_service.dart';
 import '../services/widget_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/grade_ring.dart';
+import '../widgets/saved_data_banner.dart';
 import 'login_screen.dart';
 import 'menu_screen.dart';
 import 'settings_screen.dart';
@@ -20,6 +22,11 @@ class GradesScreen extends ConsumerWidget {
   Future<void> _logout(BuildContext context, WidgetRef ref) async {
     ref.invalidate(gradesProvider);
     const storage = FlutterSecureStorage();
+    final username = (await storage.read(key: 'username'))?.trim();
+
+    if (username != null && username.isNotEmpty) {
+      await CacheService.clearGrades(username);
+    }
     await storage.delete(key: 'username');
     await storage.delete(key: 'password');
 
@@ -71,6 +78,13 @@ class GradesScreen extends ConsumerWidget {
             onPressed: () => _logout(context, ref),
           ),
         ],
+        // Saved grades are on screen already; the refresh runs behind them.
+        bottom: (gradesAsyncValue.value?.isRefreshing ?? false)
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(2),
+                child: LinearProgressIndicator(minHeight: 2),
+              )
+            : null,
       ),
       body: gradesAsyncValue.when(
         loading: () => Center(
@@ -130,7 +144,9 @@ class GradesScreen extends ConsumerWidget {
             ),
           ),
         ),
-        data: (grades) {
+        data: (snapshot) {
+          final grades = snapshot.grades;
+
           if (grades.isEmpty) {
             return Center(
               child: Column(
@@ -170,6 +186,19 @@ class GradesScreen extends ConsumerWidget {
             onRefresh: () => ref.read(gradesProvider.notifier).refreshGrades(),
             child: CustomScrollView(
               slivers: [
+                if (snapshot.isStale)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                      child: SavedDataBanner(
+                        title: l10n.showingSavedGrades,
+                        fetchedAt: snapshot.fetchedAt,
+                        onRetry: () =>
+                            ref.read(gradesProvider.notifier).refreshGrades(),
+                      ),
+                    ),
+                  ),
+
                 // HERO card
                 SliverToBoxAdapter(
                   child: Padding(
