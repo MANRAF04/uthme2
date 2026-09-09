@@ -1,0 +1,83 @@
+{
+  "@@locale": "en",
+  "appTitle": "UTHME2",
+  "browseDiningMenus": "Browse dining menus",
+  "change": "Change",
+  "checkConnection": "Check your connection and try again.",
+  "couldNotLoadMenu": "Could not load menu: {error}",
+  "@couldNotLoadMenu": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "couldNotLoadRestaurants": "Could not load restaurants: {error}",
+  "@couldNotLoadRestaurants": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "couldNotReachPortal": "Couldn't reach the grade portal",
+  "ectsEarned": "ECTS earned",
+  "enterBothCredentials": "Please enter both username and password.",
+  "fetchingGrades": "Fetching your latest grades...",
+  "languageLabel": "Language",
+  "lastGrade": "last grade",
+  "logIn": "Log in",
+  "loginFailed": "Login failed: {error}",
+  "@loginFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "loginHeroSubtitle": "Sign in with your UTH account. We keep you logged in on this device.",
+  "loginHeroTitle": "Grades and menu,\nin one tap.",
+  "logOut": "Log Out",
+  "myGrades": "My Grades",
+  "noGradesYet": "No grades yet",
+  "noGradesYetSubtitle": "They'll show up here once your professors post them.",
+  "noMenuForDay": "No menu for this day",
+  "noMenuForDaySubtitle": "Use the arrows to check another date.",
+  "noRestaurantsAvailable": "No restaurants are available at the moment.",
+  "orSeparator": "or",
+  "passed": "passed",
+  "password": "Password",
+  "pickYourRestaurant": "Pick your restaurant",
+  "preferenceSyncFailed": "Preference saved locally. Server sync failed: {error}",
+  "@preferenceSyncFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
+  "refresh": "Refresh",
+  "refreshing": "REFRESHING…",
+  "rememberRestaurant": "We'll remember it for next time.",
+  "restaurant": "Restaurant",
+  "retry": "Retry",
+  "semester": "Semester {number}",
+  "@semester": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "servingNow": "SERVING NOW",
+  "settings": "Settings",
+  "subjectCount": "{count, plural, one{{count} subject} other{{count} subjects}}",
+  "@subjectCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "systemDefault": "System default",
+  "today": "Today",
+  "tomorrow": "Tomorrow",
+  "tryAgain": "Try Again",
+  "universityMenus": "University Menus",
+  "unweightedAverage": "UNWEIGHTED AVERAGE",
+  "usernameLabel": "UTH Username",
+  "weightedAverage": "WEIGHTED AVERAGE",
+  "yesterday": "Yesterday"
+}
