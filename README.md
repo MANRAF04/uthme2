@@ -128,14 +128,23 @@ Lints come from `package:flutter_lints` via `analysis_options.yaml`.
 
 ## Continuous integration
 
-`.github/workflows/android-build.yml` runs on every push and pull request to `main`, and on manual dispatch. It pins Flutter 3.44.2 and JDK 17, runs `flutter analyze`, builds a release APK and uploads it as the `uthme2-release-apk` artifact.
+`.github/workflows/android-build.yml` runs on every push and pull request to `main`, and on manual dispatch. It pins Flutter 3.44.2 and JDK 17, runs `flutter analyze`, builds a release APK and uploads it as the `uthme2-release-apk` artifact. These artifacts are for testing: they are debug-signed and expire after 90 days.
 
-Release builds are currently signed with the Flutter debug keystore (see `android/app/build.gradle.kts`), so CI artifacts are for testing only and cannot be published. Real signing needs a keystore plus `key.properties`, both of which are gitignored.
+## Releasing
 
-## Known rough edges
+`.github/workflows/android-release.yml` is manual dispatch only. It takes a `tag` input (`vX.Y.Z`) plus an optional pre-release flag, then builds a signed universal APK, attaches it to a new GitHub Release and generates notes from the commit log. The tag drives `--build-name`, and the workflow run number drives `--build-number`, so `pubspec.yaml` never needs bumping by hand.
 
-- `applicationId` is still the template default, `com.example.uthme2`
-- Release signing is not set up (see above)
+Signing reads `android/key.properties` (gitignored), which the workflow writes from four repository secrets: `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD`. Without that file the release build falls back to debug keys so `flutter run --release` keeps working locally.
+
+Generate the keystore once and keep an offline backup. Losing it means no further in-place updates are possible for installed users:
+
+```bash
+keytool -genkeypair -v -keystore ~/uthme2-release.jks \
+  -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias uthme2
+base64 -w 0 ~/uthme2-release.jks   # value for KEYSTORE_BASE64
+```
+
+Avoid backslashes in the passwords: they are written into a Java properties file, where `\` is an escape character.
 
 ## Disclaimer
 

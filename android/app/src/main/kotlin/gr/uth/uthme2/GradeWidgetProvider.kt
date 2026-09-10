@@ -1,4 +1,4 @@
-package com.example.uthme2
+package gr.uth.uthme2
 
 import android.appwidget.AppWidgetManager
 import android.content.Context

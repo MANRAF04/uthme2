@@ -33,9 +33,9 @@ class WidgetService {
   WidgetService._();
 
   static const _androidProvider = 'GradeWidgetProvider';
-  static const _qualifiedProvider = 'com.example.uthme2.GradeWidgetProvider';
-  static const _packageName = 'com.example.uthme2';
-  static const _mainActivity = 'com.example.uthme2.MainActivity';
+  static const _qualifiedProvider = 'gr.uth.uthme2.GradeWidgetProvider';
+  static const _packageName = 'gr.uth.uthme2';
+  static const _mainActivity = 'gr.uth.uthme2.MainActivity';
   static const _imageKey = 'gradeWidgetImage';
   static const _logicalSize = Size(360, 210);
 
