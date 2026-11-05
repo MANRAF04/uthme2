@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="grades_channel_description">Alerts when a course you are waiting on gets graded.</string>
+    <string name="grades_channel_name">New grades</string>
     <string name="grade_widget_label">UTH Weighted Average</string>
     <string name="grade_widget_description">Your ECTS-weighted average. Tap to refresh.</string>
 </resources>

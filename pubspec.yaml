@@ -45,6 +45,8 @@ dependencies:
   home_widget: ^0.7.0
   android_intent_plus: ^5.0.0
   flutter_svg: ^2.0.17
+  firebase_core: ^5.1.0
+  firebase_messaging: ^17.0.1
 
 dev_dependencies:
   flutter_test:

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="grades_channel_description">Ειδοποιήσεις όταν βαθμολογείται ένα μάθημα που περιμένεις.</string>
+    <string name="grades_channel_name">Νέες βαθμολογίες</string>
+</resources>

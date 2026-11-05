@@ -113,6 +113,58 @@ class ApiService {
     }
   }
 
+  Future<void> registerDevice({
+    required String username,
+    required String password,
+    required String fcmToken,
+    required String platform,
+    required String locale,
+  }) async {
+    final response = await _timed(
+      http.post(
+        Uri.parse('$baseUrl/devices/register'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          'username': username,
+          'password': password,
+          'fcm_token': fcmToken,
+          'platform': platform,
+          'locale': locale,
+        }),
+      ),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        _extractErrorMessage(response.body, fallback: 'Failed to register device.'),
+      );
+    }
+  }
+
+  Future<void> unregisterDevice({
+    required String username,
+    required String password,
+    required String fcmToken,
+  }) async {
+    final response = await _timed(
+      http.post(
+        Uri.parse('$baseUrl/devices/unregister'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          'username': username,
+          'password': password,
+          'fcm_token': fcmToken,
+        }),
+      ),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        _extractErrorMessage(response.body, fallback: 'Failed to unregister device.'),
+      );
+    }
+  }
+
   Future<List<Grade>> _pollTaskStatus(String taskId) async {
     final deadline = DateTime.now().add(_pollTimeout);
 

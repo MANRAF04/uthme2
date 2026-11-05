@@ -67,9 +67,13 @@ secrets/
 .env.*
 *.env
 !.env.example
-android/app/google-services.json
-ios/Runner/GoogleService-Info.plist
-macos/Runner/GoogleService-Info.plist
+
+# Firebase project config. Each fork brings its own project.
+**/google-services.json
+**/GoogleService-Info.plist
+lib/firebase_options.dart
+firebase.json
+.firebaserc
 
 # Build outputs
 *.apk
