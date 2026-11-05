@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 import '../widgets/grouped.dart';
 import '../widgets/large_title_bar.dart';
 import 'login_screen.dart';
+import 'student_id_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -156,6 +157,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     title: _username ?? '',
                     subtitle: l10n.usernameLabel,
+                  ),
+                  GroupedRow(
+                    leading: const IconTile(
+                      icon: CupertinoIcons.creditcard_fill,
+                      color: Color(0xFF0A84FF),
+                    ),
+                    title: l10n.studentId,
+                    showChevron: true,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const StudentIdScreen(),
+                      ),
+                    ),
                   ),
                   GroupedRow(
                     title: l10n.logOut,

@@ -98,6 +98,12 @@ abstract class AppLocalizations {
     Locale('en'),
   ];
 
+  /// No description provided for @academicIdNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Academic ID number'**
+  String get academicIdNumber;
+
   /// No description provided for @account.
   ///
   /// In en, this message translates to:
@@ -146,6 +152,12 @@ abstract class AppLocalizations {
   /// **'Check your connection and try again.'**
   String get checkConnection;
 
+  /// No description provided for @copied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied'**
+  String get copied;
+
   /// No description provided for @couldNotLoadMenu.
   ///
   /// In en, this message translates to:
@@ -164,6 +176,30 @@ abstract class AppLocalizations {
   /// **'Couldn\'t reach the grade portal'**
   String get couldNotReachPortal;
 
+  /// No description provided for @diningCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Dining card'**
+  String get diningCard;
+
+  /// No description provided for @diningCardActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get diningCardActive;
+
+  /// No description provided for @diningCardInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get diningCardInactive;
+
+  /// No description provided for @diningCardValidity.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid from {from} to {to}'**
+  String diningCardValidity(Object from, Object to);
+
   /// No description provided for @ectsEarned.
   ///
   /// In en, this message translates to:
@@ -181,6 +217,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Fetching your latest grades...'**
   String get fetchingGrades;
+
+  /// No description provided for @freeMealsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Free meals are not available today'**
+  String get freeMealsUnavailable;
 
   /// No description provided for @languageLabel.
   ///
@@ -260,6 +302,12 @@ abstract class AppLocalizations {
   /// **'My Grades'**
   String get myGrades;
 
+  /// No description provided for @noDiningCard.
+  ///
+  /// In en, this message translates to:
+  /// **'No dining card'**
+  String get noDiningCard;
+
   /// No description provided for @noGradesYet.
   ///
   /// In en, this message translates to:
@@ -289,6 +337,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No restaurants are available at the moment.'**
   String get noRestaurantsAvailable;
+
+  /// No description provided for @noStudentDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'No student details yet'**
+  String get noStudentDetails;
+
+  /// No description provided for @noStudentDetailsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'They will appear after your next grade sync. Pull down to sync now.'**
+  String get noStudentDetailsSubtitle;
 
   /// No description provided for @notificationsLabel.
   ///
@@ -362,6 +422,12 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get retry;
 
+  /// No description provided for @scanAtRestaurant.
+  ///
+  /// In en, this message translates to:
+  /// **'Show this code at the restaurant checkout.'**
+  String get scanAtRestaurant;
+
   /// No description provided for @semester.
   ///
   /// In en, this message translates to:
@@ -391,6 +457,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Showing the saved menu'**
   String get showingSavedMenu;
+
+  /// No description provided for @studentId.
+  ///
+  /// In en, this message translates to:
+  /// **'Student ID'**
+  String get studentId;
+
+  /// No description provided for @studentNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Student number (AEM)'**
+  String get studentNumber;
 
   /// No description provided for @subjectCount.
   ///

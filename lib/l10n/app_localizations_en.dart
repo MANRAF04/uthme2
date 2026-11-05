@@ -9,6 +9,9 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get academicIdNumber => 'Academic ID number';
+
+  @override
   String get account => 'Account';
 
   @override
@@ -33,6 +36,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkConnection => 'Check your connection and try again.';
 
   @override
+  String get copied => 'Copied';
+
+  @override
   String couldNotLoadMenu(Object error) {
     return 'Could not load menu: $error';
   }
@@ -46,6 +52,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotReachPortal => 'Couldn\'t reach the grade portal';
 
   @override
+  String get diningCard => 'Dining card';
+
+  @override
+  String get diningCardActive => 'Active';
+
+  @override
+  String get diningCardInactive => 'Inactive';
+
+  @override
+  String diningCardValidity(Object from, Object to) {
+    return 'Valid from $from to $to';
+  }
+
+  @override
   String get ectsEarned => 'ECTS earned';
 
   @override
@@ -53,6 +73,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fetchingGrades => 'Fetching your latest grades...';
+
+  @override
+  String get freeMealsUnavailable => 'Free meals are not available today';
 
   @override
   String get languageLabel => 'Language';
@@ -101,6 +124,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myGrades => 'My Grades';
 
   @override
+  String get noDiningCard => 'No dining card';
+
+  @override
   String get noGradesYet => 'No grades yet';
 
   @override
@@ -116,6 +142,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noRestaurantsAvailable =>
       'No restaurants are available at the moment.';
+
+  @override
+  String get noStudentDetails => 'No student details yet';
+
+  @override
+  String get noStudentDetailsSubtitle =>
+      'They will appear after your next grade sync. Pull down to sync now.';
 
   @override
   String get notificationsLabel => 'Notifications';
@@ -158,6 +191,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retry => 'Retry';
 
   @override
+  String get scanAtRestaurant => 'Show this code at the restaurant checkout.';
+
+  @override
   String semester(int number) {
     return 'Semester $number';
   }
@@ -173,6 +209,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get showingSavedMenu => 'Showing the saved menu';
+
+  @override
+  String get studentId => 'Student ID';
+
+  @override
+  String get studentNumber => 'Student number (AEM)';
 
   @override
   String subjectCount(int count) {

@@ -74,13 +74,14 @@ class WidgetService {
     await _render(await _loadSavedStats(), loading: true);
 
     try {
-      List<Grade> grades;
+      GradesResponse response;
       try {
-        grades = await _api.fetchGrades(username, password, forceRefresh: true);
+        response = await _api.fetchGrades(username, password, forceRefresh: true);
       } on TaskCompletedException {
-        grades = await _api.fetchGrades(username, password, forceRefresh: false);
+        response = await _api.fetchGrades(username, password, forceRefresh: false);
       }
-      await CacheService.writeGrades(username, grades);
+      final grades = response.grades;
+      await CacheService.writeGrades(username, grades, profile: response.profile);
       final weighted = await readStoredWeightedMode();
       await _render(GradeStats.from(grades, weighted: weighted));
     } catch (_) {
