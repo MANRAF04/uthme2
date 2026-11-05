@@ -384,6 +384,86 @@ void main() {
     );
   });
 
+  testWidgets('19_student_id', (tester) async {
+    await _shot(
+      tester,
+      name: '19_student_id',
+      home: const HomeShell(initialTab: HomeTab.settings),
+      overrides: [
+        _grades(
+          () async => GradesSnapshot(
+            grades: demoGrades,
+            profile: demoProfile,
+            fetchedAt: DateTime.now(),
+          ),
+        ),
+      ],
+      interact: (tester) async {
+        await tester.tap(find.text('Student ID'));
+      },
+    );
+  });
+
+  testWidgets('20_student_id_no_card', (tester) async {
+    await _shot(
+      tester,
+      name: '20_student_id_no_card',
+      home: const HomeShell(initialTab: HomeTab.settings),
+      overrides: [
+        _grades(
+          () async => GradesSnapshot(
+            grades: demoGrades,
+            profile: demoProfileNoCard,
+            fetchedAt: DateTime.now(),
+          ),
+        ),
+      ],
+      interact: (tester) async {
+        await tester.tap(find.text('Student ID'));
+      },
+    );
+  });
+
+  testWidgets('21_student_id_inactive', (tester) async {
+    await _shot(
+      tester,
+      name: '21_student_id_inactive',
+      home: const HomeShell(initialTab: HomeTab.settings),
+      overrides: [
+        _grades(
+          () async => GradesSnapshot(
+            grades: demoGrades,
+            profile: demoProfileInactive,
+            fetchedAt: DateTime.now(),
+          ),
+        ),
+      ],
+      interact: (tester) async {
+        await tester.tap(find.text('Student ID'));
+      },
+    );
+  });
+
+  testWidgets('22_student_id_empty', (tester) async {
+    await _shot(
+      tester,
+      name: '22_student_id_empty',
+      home: const HomeShell(initialTab: HomeTab.settings),
+      overrides: [
+        _grades(
+          () async => GradesSnapshot(
+            grades: demoGrades,
+            profile: null,
+            fetchedAt: DateTime.now(),
+          ),
+        ),
+      ],
+      interact: (tester) async {
+        await tester.tap(find.text('Student ID'));
+      },
+    );
+  });
+
   testWidgets('home widget', (tester) async {
     await _shot(
       tester,

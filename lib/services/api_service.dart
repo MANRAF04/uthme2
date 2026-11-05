@@ -3,8 +3,19 @@ import 'package:http/http.dart' as http;
 import '../models/grade.dart';
 import '../models/restaurant.dart';
 import '../models/restaurant_menu.dart';
+import '../models/student_profile.dart';
 
 class TaskCompletedException implements Exception {}
+
+/// A get-grades answer. [profile] is null when the response carried no
+/// `profile` key (older backend), which callers treat as "keep what we have".
+/// A `profile: null` from the server becomes an empty [StudentProfile].
+class GradesResponse {
+  final List<Grade> grades;
+  final StudentProfile? profile;
+
+  const GradesResponse({required this.grades, this.profile});
+}
 
 class ApiService {
   static const String baseUrl = "https://manraf.duckdns.org:4242/api";
@@ -12,7 +23,7 @@ class ApiService {
   static const Duration _pollTimeout = Duration(minutes: 2);
   static const Duration _requestTimeout = Duration(seconds: 15);
 
-  Future<List<Grade>> fetchGrades(String username, String password, {bool forceRefresh = false}) async {
+  Future<GradesResponse> fetchGrades(String username, String password, {bool forceRefresh = false}) async {
     final response = await _timed(
       http.post(
         Uri.parse('$baseUrl/get-grades'),
@@ -41,7 +52,10 @@ class ApiService {
     final data = jsonDecode(response.body);
 
     if (data['status'] == 'success') {
-      return (data['data'] as List).map((item) => Grade.fromJson(item)).toList();
+      return GradesResponse(
+        grades: (data['data'] as List).map((item) => Grade.fromJson(item)).toList(),
+        profile: _parseProfile(data),
+      );
     } else if (data['status'] == 'processing') {
       return await _pollTaskStatus(data['task_id']);
     }
@@ -193,7 +207,17 @@ class ApiService {
     }
   }
 
-  Future<List<Grade>> _pollTaskStatus(String taskId) async {
+  StudentProfile? _parseProfile(Map<String, dynamic> data) {
+    if (!data.containsKey('profile')) return null;
+    final profile = data['profile'];
+    return profile is Map<String, dynamic>
+        ? StudentProfile.fromJson(profile)
+        : const StudentProfile();
+  }
+
+  /// Completes only by throwing: [TaskCompletedException] once the scrape is
+  /// done (callers then re-read get-grades), or an error.
+  Future<Never> _pollTaskStatus(String taskId) async {
     final deadline = DateTime.now().add(_pollTimeout);
 
     while (DateTime.now().isBefore(deadline)) {

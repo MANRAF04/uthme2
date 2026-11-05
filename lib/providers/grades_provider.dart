@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../models/grade.dart';
 import '../models/grades_snapshot.dart';
 import '../services/api_service.dart';
 import '../services/cache_service.dart';
@@ -33,8 +32,10 @@ class GradesNotifier extends AsyncNotifier<GradesSnapshot> {
     // Saved grades paint straight away; the server answer replaces them when
     // (and if) it arrives.
     _refreshBehindCache(credentials);
+    final profile = await CacheService.readProfile(credentials.username);
     return GradesSnapshot(
       grades: cached.data,
+      profile: profile?.data,
       fetchedAt: cached.fetchedAt,
       isRefreshing: true,
     );
@@ -90,18 +91,21 @@ class GradesNotifier extends AsyncNotifier<GradesSnapshot> {
     final username = credentials.username;
     final password = credentials.password;
 
-    List<Grade> grades;
+    GradesResponse response;
     try {
-      grades = await api.fetchGrades(username, password, forceRefresh: forceRefresh);
+      response = await api.fetchGrades(username, password, forceRefresh: forceRefresh);
     } on TaskCompletedException {
       // Background scrape finished! Fetch the fresh data from the DB.
-      grades = await api.fetchGrades(username, password, forceRefresh: false);
+      response = await api.fetchGrades(username, password, forceRefresh: false);
     }
 
-    await CacheService.writeGrades(username, grades);
+    final grades = response.grades;
+    // No profile in the answer means "unchanged", not "gone".
+    final profile = response.profile ?? (await CacheService.readProfile(username))?.data;
+    await CacheService.writeGrades(username, grades, profile: response.profile);
     await WidgetService.syncFromGrades(grades);
     unawaited(PushService.ensureRegistered());
-    return GradesSnapshot(grades: grades, fetchedAt: DateTime.now());
+    return GradesSnapshot(grades: grades, profile: profile, fetchedAt: DateTime.now());
   }
 
   Future<_Credentials> _readCredentials() async {

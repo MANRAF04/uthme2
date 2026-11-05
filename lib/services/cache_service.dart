@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/grade.dart';
 import '../models/restaurant.dart';
 import '../models/restaurant_menu.dart';
+import '../models/student_profile.dart';
 
 /// A payload read back from device storage, with the moment the server last
 /// answered for it. [fetchedAt] is null only when the stored stamp is missing
@@ -44,10 +45,28 @@ class CacheService {
     );
   }
 
-  static Future<void> writeGrades(String username, List<Grade> grades) {
-    return _writeJson(_gradesKey(username), {
+  /// Saves grades and the profile together. A null [profile] keeps the one
+  /// already saved, so a response without a profile never erases it.
+  static Future<void> writeGrades(
+    String username,
+    List<Grade> grades, {
+    StudentProfile? profile,
+  }) async {
+    final key = _gradesKey(username);
+    final profileJson = profile?.toJson() ?? (await _readJson(key))?['profile'];
+
+    await _writeJson(key, {
       'data': grades.map((grade) => grade.toJson()).toList(),
+      'profile': ?profileJson,
     });
+  }
+
+  static Future<Cached<StudentProfile>?> readProfile(String username) async {
+    final json = await _readJson(_gradesKey(username));
+    final profile = json?['profile'];
+    if (json == null || profile is! Map<String, dynamic>) return null;
+
+    return Cached(StudentProfile.fromJson(profile), _readFetchedAt(json));
   }
 
   static Future<void> clearGrades(String username) =>

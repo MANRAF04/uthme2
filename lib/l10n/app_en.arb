@@ -1,5 +1,6 @@
 {
   "@@locale": "en",
+  "academicIdNumber": "Academic ID number",
   "account": "Account",
   "appTitle": "UTHME2",
   "averageSimple": "Simple",
@@ -8,6 +9,7 @@
   "cancel": "Cancel",
   "change": "Change",
   "checkConnection": "Check your connection and try again.",
+  "copied": "Copied",
   "couldNotLoadMenu": "Could not load menu: {error}",
   "@couldNotLoadMenu": {
     "placeholders": {
@@ -21,9 +23,20 @@
     }
   },
   "couldNotReachPortal": "Couldn't reach the grade portal",
+  "diningCard": "Dining card",
+  "diningCardActive": "Active",
+  "diningCardInactive": "Inactive",
+  "diningCardValidity": "Valid from {from} to {to}",
+  "@diningCardValidity": {
+    "placeholders": {
+      "from": {},
+      "to": {}
+    }
+  },
   "ectsEarned": "ECTS earned",
   "enterBothCredentials": "Please enter both username and password.",
   "fetchingGrades": "Fetching your latest grades...",
+  "freeMealsUnavailable": "Free meals are not available today",
   "languageLabel": "Language",
   "lastGrade": "last grade",
   "lastUpdated": "Last updated {timestamp}",
@@ -47,11 +60,14 @@
   "menuNotifications": "Meal notifications",
   "menuNotificationsSubtitle": "Main courses of your preferred restaurant, 2 hours before lunch and dinner.",
   "myGrades": "My Grades",
+  "noDiningCard": "No dining card",
   "noGradesYet": "No grades yet",
   "noGradesYetSubtitle": "They'll show up here once your professors post them.",
   "noMenuForDay": "No menu for this day",
   "noMenuForDaySubtitle": "Use the arrows to check another date.",
   "noRestaurantsAvailable": "No restaurants are available at the moment.",
+  "noStudentDetails": "No student details yet",
+  "noStudentDetailsSubtitle": "They will appear after your next grade sync. Pull down to sync now.",
   "notificationsLabel": "Notifications",
   "notificationsSyncFailed": "Could not update notifications: {error}",
   "@notificationsSyncFailed": {
@@ -74,6 +90,7 @@
   "rememberRestaurant": "We'll remember it for next time.",
   "restaurant": "Restaurant",
   "retry": "Retry",
+  "scanAtRestaurant": "Show this code at the restaurant checkout.",
   "semester": "Semester {number}",
   "@semester": {
     "placeholders": {
@@ -86,6 +103,8 @@
   "settings": "Settings",
   "showingSavedGrades": "Showing saved grades",
   "showingSavedMenu": "Showing the saved menu",
+  "studentId": "Student ID",
+  "studentNumber": "Student number (AEM)",
   "subjectCount": "{count, plural, one{{count} subject} other{{count} subjects}}",
   "@subjectCount": {
     "placeholders": {

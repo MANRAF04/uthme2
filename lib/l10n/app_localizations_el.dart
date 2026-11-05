@@ -9,6 +9,9 @@ class AppLocalizationsEl extends AppLocalizations {
   AppLocalizationsEl([String locale = 'el']) : super(locale);
 
   @override
+  String get academicIdNumber => 'Αριθμός ακαδημαϊκής ταυτότητας';
+
+  @override
   String get account => 'Λογαριασμός';
 
   @override
@@ -33,6 +36,9 @@ class AppLocalizationsEl extends AppLocalizations {
   String get checkConnection => 'Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά.';
 
   @override
+  String get copied => 'Αντιγράφηκε';
+
+  @override
   String couldNotLoadMenu(Object error) {
     return 'Δεν ήταν δυνατή η φόρτωση του μενού: $error';
   }
@@ -47,6 +53,20 @@ class AppLocalizationsEl extends AppLocalizations {
       'Δεν ήταν δυνατή η σύνδεση με την πύλη βαθμών';
 
   @override
+  String get diningCard => 'Κάρτα σίτισης';
+
+  @override
+  String get diningCardActive => 'Ενεργή';
+
+  @override
+  String get diningCardInactive => 'Ανενεργή';
+
+  @override
+  String diningCardValidity(Object from, Object to) {
+    return 'Ισχύει από $from έως $to';
+  }
+
+  @override
   String get ectsEarned => 'Μονάδες ECTS';
 
   @override
@@ -54,6 +74,9 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get fetchingGrades => 'Λήψη των τελευταίων βαθμών σας...';
+
+  @override
+  String get freeMealsUnavailable => 'Η δωρεάν σίτιση δεν ισχύει σήμερα';
 
   @override
   String get languageLabel => 'Γλώσσα';
@@ -102,6 +125,9 @@ class AppLocalizationsEl extends AppLocalizations {
   String get myGrades => 'Οι βαθμοί μου';
 
   @override
+  String get noDiningCard => 'Δεν υπάρχει κάρτα σίτισης';
+
+  @override
   String get noGradesYet => 'Δεν υπάρχουν βαθμοί ακόμη';
 
   @override
@@ -118,6 +144,13 @@ class AppLocalizationsEl extends AppLocalizations {
   @override
   String get noRestaurantsAvailable =>
       'Δεν υπάρχουν διαθέσιμα εστιατόρια αυτή τη στιγμή.';
+
+  @override
+  String get noStudentDetails => 'Δεν υπάρχουν ακόμα στοιχεία φοιτητή';
+
+  @override
+  String get noStudentDetailsSubtitle =>
+      'Θα εμφανιστούν μετά τον επόμενο συγχρονισμό βαθμών. Σύρετε προς τα κάτω για συγχρονισμό τώρα.';
 
   @override
   String get notificationsLabel => 'Ειδοποιήσεις';
@@ -160,6 +193,10 @@ class AppLocalizationsEl extends AppLocalizations {
   String get retry => 'Δοκιμάστε ξανά';
 
   @override
+  String get scanAtRestaurant =>
+      'Δείξτε αυτόν τον κωδικό στο ταμείο του εστιατορίου.';
+
+  @override
   String semester(int number) {
     return 'Εξάμηνο $number';
   }
@@ -175,6 +212,12 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get showingSavedMenu => 'Εμφανίζεται το αποθηκευμένο μενού';
+
+  @override
+  String get studentId => 'Φοιτητική ταυτότητα';
+
+  @override
+  String get studentNumber => 'Αριθμός μητρώου (ΑΕΜ)';
 
   @override
   String subjectCount(int count) {

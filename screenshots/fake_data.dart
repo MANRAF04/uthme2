@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:uthme2/models/grade.dart';
+import 'package:uthme2/models/student_profile.dart';
 
 /// Deterministic demo content for the screenshot harness.
 
@@ -219,4 +220,32 @@ http.Response _json(Object body) => http.Response(
   jsonEncode(body),
   200,
   headers: {'content-type': 'application/json; charset=utf-8'},
+);
+
+const StudentProfile demoProfile = StudentProfile(
+  studentNo: '03735',
+  academicNo: '215807327634',
+  departmentCode: '501',
+  programCode: '128',
+  diningCard: DiningCard(
+    active: true,
+    validFrom: '2026-11-02',
+    validTo: '2027-06-25',
+  ),
+  freeMeals: true,
+);
+
+const StudentProfile demoProfileNoCard = StudentProfile(
+  studentNo: '03735',
+  academicNo: '215807327634',
+);
+
+const StudentProfile demoProfileInactive = StudentProfile(
+  studentNo: '03735',
+  academicNo: '215807327634',
+  diningCard: DiningCard(
+    active: false,
+    validFrom: '2025-11-03',
+    validTo: '2026-06-26',
+  ),
 );
