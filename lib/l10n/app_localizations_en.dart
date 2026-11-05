@@ -72,6 +72,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logOut => 'Log Out';
 
   @override
+  String get menuNotifications => 'Meal notifications';
+
+  @override
+  String get menuNotificationsSubtitle =>
+      'Main courses of your preferred restaurant, 2 hours before lunch and dinner.';
+
+  @override
   String get myGrades => 'My Grades';
 
   @override
@@ -90,6 +97,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noRestaurantsAvailable =>
       'No restaurants are available at the moment.';
+
+  @override
+  String get notificationsLabel => 'Notifications';
+
+  @override
+  String notificationsSyncFailed(Object error) {
+    return 'Could not update notifications: $error';
+  }
 
   @override
   String get orSeparator => 'or';

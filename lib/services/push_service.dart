@@ -6,9 +6,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../l10n/locale_controller.dart';
+import '../providers/menu_notifications_controller.dart';
 import 'api_service.dart';
 
 const String _courseGradedType = 'course_graded';
+const String _menuUpcomingType = 'menu_upcoming';
 
 /// FCM registration and incoming "a course was graded" pushes.
 ///
@@ -21,6 +23,7 @@ class PushService {
   static const _storage = FlutterSecureStorage();
   static final _api = ApiService();
   static final _courseGraded = StreamController<void>.broadcast();
+  static final _menuOpened = StreamController<void>.broadcast();
 
   static bool _available = false;
   static bool _pushEnabled = false;
@@ -30,6 +33,9 @@ class PushService {
 
   /// Fires when a course_graded push arrives in the foreground or is tapped.
   static Stream<void> get onCourseGraded => _courseGraded.stream;
+
+  /// Fires when the user taps a menu_upcoming push.
+  static Stream<void> get onMenuOpened => _menuOpened.stream;
 
   static Future<void> initialize() async {
     if (kIsWeb) return;
@@ -44,8 +50,8 @@ class PushService {
 
     // Subscribed before any register() call so the FID event is never missed.
     FirebaseMessaging.instance.onRegistered.listen(_onRegistered);
-    FirebaseMessaging.onMessage.listen(_handleMessage);
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleOpenedMessage);
   }
 
   /// Handles a push that cold-started the app. Call once the UI is listening.
@@ -53,7 +59,7 @@ class PushService {
     if (!_available) return;
 
     final message = await FirebaseMessaging.instance.getInitialMessage();
-    if (message != null) _handleMessage(message);
+    if (message != null) _handleOpenedMessage(message);
   }
 
   /// Registers this device once per app session. The server only knows the
@@ -141,7 +147,7 @@ class PushService {
 
     final locale = resolveLocaleWithoutContext(await readStoredLocale());
 
-    await _api.registerDevice(
+    final menuNotificationsEnabled = await _api.registerDevice(
       username: username,
       password: password,
       fcmToken: fid,
@@ -149,11 +155,23 @@ class PushService {
       locale: locale.languageCode,
     );
     _postedFid = fid;
+    await writeStoredMenuNotifications(menuNotificationsEnabled);
   }
 
-  static void _handleMessage(RemoteMessage message) {
+  /// The OS shows nothing while the app is open, so a new grade just refreshes
+  /// the list. A menu push needs no action, the user is already in the app.
+  static void _handleForegroundMessage(RemoteMessage message) {
     if (message.data['type'] == _courseGradedType) {
       _courseGraded.add(null);
+    }
+  }
+
+  static void _handleOpenedMessage(RemoteMessage message) {
+    switch (message.data['type']) {
+      case _courseGradedType:
+        _courseGraded.add(null);
+      case _menuUpcomingType:
+        _menuOpened.add(null);
     }
   }
 }

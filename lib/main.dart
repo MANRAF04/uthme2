@@ -10,8 +10,10 @@ import 'l10n/app_localizations.dart';
 import 'l10n/locale_controller.dart';
 import 'providers/average_mode_controller.dart';
 import 'providers/grades_provider.dart';
+import 'providers/menu_notifications_controller.dart';
 import 'screens/login_screen.dart';
 import 'screens/grades_screen.dart';
+import 'screens/menu_screen.dart';
 import 'services/push_service.dart';
 import 'services/widget_service.dart';
 import 'theme/app_theme.dart';
@@ -35,12 +37,14 @@ void main() async {
       username != null && username.isNotEmpty && password != null && password.isNotEmpty;
   final initialLocale = await readStoredLocale();
   final initialWeightedMode = await readStoredWeightedMode();
+  final initialMenuNotifications = await readStoredMenuNotifications();
 
   runApp(
     ProviderScope(
       overrides: [
         initialLocaleProvider.overrideWithValue(initialLocale),
         initialWeightedModeProvider.overrideWithValue(initialWeightedMode),
+        initialMenuNotificationsProvider.overrideWithValue(initialMenuNotifications),
       ],
       child: UthGradesApp(isLoggedIn: isLoggedIn),
     ),
@@ -57,18 +61,22 @@ class UthGradesApp extends ConsumerStatefulWidget {
 }
 
 class _UthGradesAppState extends ConsumerState<UthGradesApp> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
   StreamSubscription<void>? _courseGradedSubscription;
+  StreamSubscription<void>? _menuOpenedSubscription;
 
   @override
   void initState() {
     super.initState();
     _courseGradedSubscription = PushService.onCourseGraded.listen((_) => _refreshGrades());
+    _menuOpenedSubscription = PushService.onMenuOpened.listen((_) => _openMenu());
     WidgetsBinding.instance.addPostFrameCallback((_) => PushService.handleLaunchMessage());
   }
 
   @override
   void dispose() {
     _courseGradedSubscription?.cancel();
+    _menuOpenedSubscription?.cancel();
     super.dispose();
   }
 
@@ -78,11 +86,18 @@ class _UthGradesAppState extends ConsumerState<UthGradesApp> {
     }
   }
 
+  void _openMenu() {
+    _navigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (context) => const RestaurantMenuScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final locale = ref.watch(localeProvider);
 
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,

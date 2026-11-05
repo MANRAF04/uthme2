@@ -113,7 +113,8 @@ class ApiService {
     }
   }
 
-  Future<void> registerDevice({
+  /// Returns the server's menu_notifications_enabled flag for this account.
+  Future<bool> registerDevice({
     required String username,
     required String password,
     required String fcmToken,
@@ -137,6 +138,33 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception(
         _extractErrorMessage(response.body, fallback: 'Failed to register device.'),
+      );
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return data['menu_notifications_enabled'] != false;
+  }
+
+  Future<void> setMenuNotifications({
+    required String username,
+    required String password,
+    required bool enabled,
+  }) async {
+    final response = await _timed(
+      http.post(
+        Uri.parse('$baseUrl/user/menu-notifications'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          'username': username,
+          'password': password,
+          'enabled': enabled,
+        }),
+      ),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception(
+        _extractErrorMessage(response.body, fallback: 'Failed to update notifications.'),
       );
     }
   }

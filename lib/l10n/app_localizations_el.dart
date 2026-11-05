@@ -73,6 +73,13 @@ class AppLocalizationsEl extends AppLocalizations {
   String get logOut => 'Αποσύνδεση';
 
   @override
+  String get menuNotifications => 'Ειδοποιήσεις γευμάτων';
+
+  @override
+  String get menuNotificationsSubtitle =>
+      'Τα κυρίως πιάτα του εστιατορίου σου, 2 ώρες πριν από το μεσημεριανό και το βραδινό.';
+
+  @override
   String get myGrades => 'Οι βαθμοί μου';
 
   @override
@@ -92,6 +99,14 @@ class AppLocalizationsEl extends AppLocalizations {
   @override
   String get noRestaurantsAvailable =>
       'Δεν υπάρχουν διαθέσιμα εστιατόρια αυτή τη στιγμή.';
+
+  @override
+  String get notificationsLabel => 'Ειδοποιήσεις';
+
+  @override
+  String notificationsSyncFailed(Object error) {
+    return 'Δεν ήταν δυνατή η ενημέρωση των ειδοποιήσεων: $error';
+  }
 
   @override
   String get orSeparator => 'ή';

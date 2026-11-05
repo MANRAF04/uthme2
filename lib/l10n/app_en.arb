@@ -38,12 +38,21 @@
   "loginHeroSubtitle": "Sign in with your UTH account. We keep you logged in on this device.",
   "loginHeroTitle": "Grades and menu,\nin one tap.",
   "logOut": "Log Out",
+  "menuNotifications": "Meal notifications",
+  "menuNotificationsSubtitle": "Main courses of your preferred restaurant, 2 hours before lunch and dinner.",
   "myGrades": "My Grades",
   "noGradesYet": "No grades yet",
   "noGradesYetSubtitle": "They'll show up here once your professors post them.",
   "noMenuForDay": "No menu for this day",
   "noMenuForDaySubtitle": "Use the arrows to check another date.",
   "noRestaurantsAvailable": "No restaurants are available at the moment.",
+  "notificationsLabel": "Notifications",
+  "notificationsSyncFailed": "Could not update notifications: {error}",
+  "@notificationsSyncFailed": {
+    "placeholders": {
+      "error": {}
+    }
+  },
   "orSeparator": "or",
   "passed": "passed",
   "password": "Password",
