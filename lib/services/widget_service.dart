@@ -94,11 +94,13 @@ class WidgetService {
     await _saveStats(stats);
     final locale = resolveLocaleWithoutContext(await readStoredLocale());
     final l10n = await AppLocalizations.delegate.load(locale);
+    final weighted = await readStoredWeightedMode();
     await HomeWidget.renderFlutterWidget(
       WidgetCard(
         stats: stats,
         l10n: l10n,
         loading: loading,
+        weighted: weighted,
         logicalSize: _logicalSize,
       ),
       key: _imageKey,

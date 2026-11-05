@@ -9,10 +9,22 @@ class AppLocalizationsEl extends AppLocalizations {
   AppLocalizationsEl([String locale = 'el']) : super(locale);
 
   @override
+  String get account => 'Λογαριασμός';
+
+  @override
   String get appTitle => 'UTHME2';
 
   @override
+  String get averageSimple => 'Απλός';
+
+  @override
+  String get averageWeighted => 'Σταθμισμένος';
+
+  @override
   String get browseDiningMenus => 'Περιήγηση στα μενού εστιατορίων';
+
+  @override
+  String get cancel => 'Ακύρωση';
 
   @override
   String get change => 'Αλλαγή';
@@ -71,6 +83,13 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get logOut => 'Αποσύνδεση';
+
+  @override
+  String get logOutConfirmMessage =>
+      'Οι αποθηκευμένοι βαθμοί θα διαγραφούν από αυτή τη συσκευή.';
+
+  @override
+  String get logOutConfirmTitle => 'Αποσύνδεση;';
 
   @override
   String get menuNotifications => 'Ειδοποιήσεις γευμάτων';
@@ -146,7 +165,7 @@ class AppLocalizationsEl extends AppLocalizations {
   }
 
   @override
-  String get servingNow => 'ΣΕΡΒΙΡΕΤΑΙ ΤΩΡΑ';
+  String get servingNow => 'Σερβίρεται τώρα';
 
   @override
   String get settings => 'Ρυθμίσεις';
@@ -170,6 +189,12 @@ class AppLocalizationsEl extends AppLocalizations {
 
   @override
   String get systemDefault => 'Προεπιλογή συστήματος';
+
+  @override
+  String get tabGrades => 'Βαθμοί';
+
+  @override
+  String get tabMenu => 'Μενού';
 
   @override
   String get today => 'Σήμερα';

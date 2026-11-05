@@ -92,3 +92,6 @@ desktop.ini
 *~
 *.bak
 *.tmp
+
+# Headless screenshot output
+screenshots/**/*.png

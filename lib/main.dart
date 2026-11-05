@@ -12,7 +12,7 @@ import 'providers/average_mode_controller.dart';
 import 'providers/grades_provider.dart';
 import 'providers/menu_notifications_controller.dart';
 import 'screens/login_screen.dart';
-import 'screens/grades_screen.dart';
+import 'screens/home_shell.dart';
 import 'screens/menu_screen.dart';
 import 'services/push_service.dart';
 import 'services/widget_service.dart';
@@ -34,7 +34,10 @@ void main() async {
   final username = (await storage.read(key: 'username'))?.trim();
   final password = await storage.read(key: 'password');
   final isLoggedIn =
-      username != null && username.isNotEmpty && password != null && password.isNotEmpty;
+      username != null &&
+      username.isNotEmpty &&
+      password != null &&
+      password.isNotEmpty;
   final initialLocale = await readStoredLocale();
   final initialWeightedMode = await readStoredWeightedMode();
   final initialMenuNotifications = await readStoredMenuNotifications();
@@ -44,7 +47,9 @@ void main() async {
       overrides: [
         initialLocaleProvider.overrideWithValue(initialLocale),
         initialWeightedModeProvider.overrideWithValue(initialWeightedMode),
-        initialMenuNotificationsProvider.overrideWithValue(initialMenuNotifications),
+        initialMenuNotificationsProvider.overrideWithValue(
+          initialMenuNotifications,
+        ),
       ],
       child: UthGradesApp(isLoggedIn: isLoggedIn),
     ),
@@ -68,9 +73,15 @@ class _UthGradesAppState extends ConsumerState<UthGradesApp> {
   @override
   void initState() {
     super.initState();
-    _courseGradedSubscription = PushService.onCourseGraded.listen((_) => _refreshGrades());
-    _menuOpenedSubscription = PushService.onMenuOpened.listen((_) => _openMenu());
-    WidgetsBinding.instance.addPostFrameCallback((_) => PushService.handleLaunchMessage());
+    _courseGradedSubscription = PushService.onCourseGraded.listen(
+      (_) => _refreshGrades(),
+    );
+    _menuOpenedSubscription = PushService.onMenuOpened.listen(
+      (_) => _openMenu(),
+    );
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => PushService.handleLaunchMessage(),
+    );
   }
 
   @override
@@ -86,10 +97,22 @@ class _UthGradesAppState extends ConsumerState<UthGradesApp> {
     }
   }
 
-  void _openMenu() {
-    _navigatorKey.currentState?.push(
-      MaterialPageRoute(builder: (context) => const RestaurantMenuScreen()),
-    );
+  /// Signed in, the shell switches itself to the Menu tab; here we only clear
+  /// whatever is pushed above it. Signed out, there is no shell, so the menu
+  /// opens on top of the login screen.
+  Future<void> _openMenu() async {
+    const storage = FlutterSecureStorage();
+    final username = (await storage.read(key: 'username'))?.trim();
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) return;
+
+    if (username != null && username.isNotEmpty) {
+      navigator.popUntil((route) => route.isFirst);
+    } else {
+      navigator.push(
+        MaterialPageRoute(builder: (context) => const RestaurantMenuScreen()),
+      );
+    }
   }
 
   @override
@@ -103,12 +126,13 @@ class _UthGradesAppState extends ConsumerState<UthGradesApp> {
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
+      scrollBehavior: const AppScrollBehavior(),
       // null = follow the device locale (Greek fallback via supportedLocales).
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       // Automatically route based on storage
-      home: widget.isLoggedIn ? const GradesScreen() : const LoginScreen(),
+      home: widget.isLoggedIn ? const HomeShell() : const LoginScreen(),
     );
   }
 }

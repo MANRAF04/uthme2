@@ -1,470 +1,358 @@
+import 'package:collection/collection.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:collection/collection.dart';
+
 import '../l10n/app_localizations.dart';
-import '../providers/average_mode_controller.dart';
-import '../providers/grades_provider.dart';
 import '../models/grade.dart';
 import '../models/grade_stats.dart';
-import '../services/cache_service.dart';
-import '../services/push_service.dart';
+import '../models/grades_snapshot.dart';
+import '../providers/average_mode_controller.dart';
+import '../providers/grades_provider.dart';
 import '../services/widget_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/grade_ring.dart';
+import '../widgets/large_title_bar.dart';
 import '../widgets/saved_data_banner.dart';
-import 'login_screen.dart';
-import 'menu_screen.dart';
-import 'settings_screen.dart';
+import '../widgets/segmented_control.dart';
+import '../widgets/status_view.dart';
 
 class GradesScreen extends ConsumerWidget {
   const GradesScreen({super.key});
 
-  Future<void> _logout(BuildContext context, WidgetRef ref) async {
-    ref.invalidate(gradesProvider);
-    const storage = FlutterSecureStorage();
-    final username = (await storage.read(key: 'username'))?.trim();
-    final password = await storage.read(key: 'password');
-
-    if (username != null && username.isNotEmpty) {
-      if (password != null && password.isNotEmpty) {
-        await PushService.unregister(username: username, password: password);
-      }
-      await CacheService.clearGrades(username);
-    }
-    await storage.delete(key: 'username');
-    await storage.delete(key: 'password');
-
-    if (!context.mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-      (route) => false,
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final gradesAsyncValue = ref.watch(gradesProvider);
-    final weighted = ref.watch(averageWeightedProvider);
+    final gradesAsync = ref.watch(gradesProvider);
     final l10n = AppLocalizations.of(context);
+    final refreshing = gradesAsync.value?.isRefreshing ?? false;
+    Future<void> refresh() => ref.read(gradesProvider.notifier).refreshGrades();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.myGrades),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.restaurant_menu),
-            tooltip: l10n.universityMenus,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const RestaurantMenuScreen(),
+      body: CustomScrollView(
+        slivers: [
+          LargeTitleBar(
+            title: l10n.myGrades,
+            actions: [
+              if (refreshing)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: CupertinoActivityIndicator(),
                 ),
-              );
-            },
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: l10n.settings,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SettingsScreen(),
+          if (gradesAsync.hasValue)
+            CupertinoSliverRefreshControl(onRefresh: refresh),
+          ...gradesAsync.when(
+            loading: () => [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: StatusView.loading(title: l10n.fetchingGrades),
+              ),
+            ],
+            error: (error, stack) => [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: StatusView(
+                  icon: CupertinoIcons.wifi_exclamationmark,
+                  title: l10n.couldNotReachPortal,
+                  message: l10n.checkConnection,
+                  actionLabel: l10n.retry,
+                  onAction: refresh,
                 ),
-              );
-            },
+              ),
+            ],
+            data: (snapshot) => snapshot.grades.isEmpty
+                ? [
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: StatusView(
+                        icon: CupertinoIcons.doc_text_search,
+                        title: l10n.noGradesYet,
+                        message: l10n.noGradesYetSubtitle,
+                      ),
+                    ),
+                  ]
+                : [_GradesContent(snapshot: snapshot, onRetry: refresh)],
           ),
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: l10n.logOut,
-            onPressed: () => _logout(context, ref),
+          SliverToBoxAdapter(
+            child: SizedBox(height: MediaQuery.paddingOf(context).bottom + 12),
           ),
         ],
-        // Saved grades are on screen already; the refresh runs behind them.
-        bottom: (gradesAsyncValue.value?.isRefreshing ?? false)
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(2),
-                child: LinearProgressIndicator(minHeight: 2),
-              )
-            : null,
       ),
-      body: gradesAsyncValue.when(
-        loading: () => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+    );
+  }
+}
+
+class _GradesContent extends ConsumerStatefulWidget {
+  final GradesSnapshot snapshot;
+  final VoidCallback onRetry;
+
+  const _GradesContent({required this.snapshot, required this.onRetry});
+
+  @override
+  ConsumerState<_GradesContent> createState() => _GradesContentState();
+}
+
+class _GradesContentState extends ConsumerState<_GradesContent> {
+  /// Semesters the user opened or closed. Untouched ones fall back to the
+  /// default: only the latest semester starts open.
+  final Map<int, bool> _expanded = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final weighted = ref.watch(averageWeightedProvider);
+    final grades = widget.snapshot.grades;
+    final stats = GradeStats.from(grades, weighted: weighted);
+    final bySemester = groupBy(grades, (Grade g) => g.semester);
+    final semesters = bySemester.keys.toList()..sort((a, b) => b.compareTo(a));
+
+    return SliverList.list(
+      children: [
+        if (widget.snapshot.isStale)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: SavedDataBanner(
+              title: l10n.showingSavedGrades,
+              fetchedAt: widget.snapshot.fetchedAt,
+              onRetry: widget.onRetry,
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
+          child: _SummaryCard(
+            stats: stats,
+            weighted: weighted,
+            onModeChanged: (index) async {
+              if ((index == 0) == weighted) return;
+              await ref.read(averageWeightedProvider.notifier).toggle();
+              await WidgetService.syncFromGrades(grades);
+            },
+          ),
+        ),
+        for (final semester in semesters)
+          _SemesterCard(
+            semester: semester,
+            grades: bySemester[semester]!,
+            weighted: weighted,
+            expanded: _expanded[semester] ?? semester == semesters.first,
+            onToggle: () => setState(() {
+              _expanded[semester] =
+                  !(_expanded[semester] ?? semester == semesters.first);
+            }),
+          ),
+      ],
+    );
+  }
+}
+
+class _SummaryCard extends StatelessWidget {
+  final GradeStats stats;
+  final bool weighted;
+  final ValueChanged<int> onModeChanged;
+
+  const _SummaryCard({
+    required this.stats,
+    required this.weighted,
+    required this.onModeChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final l10n = AppLocalizations.of(context);
+    final lastGrade = stats.lastGrade?.toStringAsFixed(1) ?? '–';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: p.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg + 2),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+      child: Column(
+        children: [
+          Row(
             children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(
-                l10n.fetchingGrades,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+              GradeRing(
+                value: stats.average,
+                size: 124,
+                textColor: p.label,
+                secondaryTextColor: p.secondaryLabel,
+                trackColor: p.fill,
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _Stat(
+                      value: '${stats.passedCount}',
+                      label: l10n.passed,
+                      color: p.success,
+                    ),
+                    const SizedBox(height: 10),
+                    _Stat(
+                      value: '${stats.totalEcts}',
+                      label: l10n.ectsEarned,
+                      color: p.label,
+                    ),
+                    const SizedBox(height: 10),
+                    _Stat(
+                      value: lastGrade,
+                      label: stats.lastGradeTitle ?? l10n.lastGrade,
+                      color: p.label,
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-        ),
-        error: (error, stack) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.coral.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    Icons.error_outline,
-                    color: AppColors.coralDeep,
-                    size: 30,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.couldNotReachPortal,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.checkConnection,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                FilledButton(
-                  onPressed: () =>
-                      ref.read(gradesProvider.notifier).refreshGrades(),
-                  child: Text(l10n.retry),
-                ),
-              ],
-            ),
+          const SizedBox(height: 18),
+          SegmentedControl(
+            labels: [l10n.averageWeighted, l10n.averageSimple],
+            selected: weighted ? 0 : 1,
+            onChanged: onModeChanged,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  final String value;
+  final String label;
+  final Color color;
+
+  const _Stat({required this.value, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: figures(AppText.title2).copyWith(color: color, height: 1.1),
         ),
-        data: (snapshot) {
-          final grades = snapshot.grades;
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppText.footnote.copyWith(color: p.secondaryLabel),
+        ),
+      ],
+    );
+  }
+}
 
-          if (grades.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n.noGradesYet,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.noGradesYetSubtitle,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
+class _SemesterCard extends StatelessWidget {
+  final int semester;
+  final List<Grade> grades;
+  final bool weighted;
+  final bool expanded;
+  final VoidCallback onToggle;
 
-          // Overall average (weighted or plain mean) and headline stats.
-          final stats = GradeStats.from(grades, weighted: weighted);
-          final String lastGradeStr = stats.lastGrade != null
-              ? stats.lastGrade!.toStringAsFixed(1)
-              : '—';
+  const _SemesterCard({
+    required this.semester,
+    required this.grades,
+    required this.weighted,
+    required this.expanded,
+    required this.onToggle,
+  });
 
-          final groupedGrades = groupBy(grades, (g) => g.semester);
-          final semesters = groupedGrades.keys.toList()
-            ..sort((a, b) => b.compareTo(a));
+  /// Null when the semester has nothing that counts towards the average yet.
+  double? get _average {
+    final counts = grades.any(
+      (g) => g.passed && g.grade != null && (!weighted || g.ects > 0),
+    );
+    return counts ? GradeStats.from(grades, weighted: weighted).average : null;
+  }
 
-          return RefreshIndicator(
-            onRefresh: () => ref.read(gradesProvider.notifier).refreshGrades(),
-            child: CustomScrollView(
-              slivers: [
-                if (snapshot.isStale)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                      child: SavedDataBanner(
-                        title: l10n.showingSavedGrades,
-                        fetchedAt: snapshot.fetchedAt,
-                        onRetry: () =>
-                            ref.read(gradesProvider.notifier).refreshGrades(),
-                      ),
-                    ),
-                  ),
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final l10n = AppLocalizations.of(context);
+    final average = _average;
+    final duration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 300);
 
-                // HERO card
-                SliverToBoxAdapter(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: ColoredBox(
+          color: p.card,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Semantics(
+                button: true,
+                expanded: expanded,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onToggle,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: AppColors.heroGradient,
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(AppRadius.xl),
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: _averageToggle(
-                                context, ref, l10n, weighted, grades),
-                          ),
-                          const SizedBox(height: 14),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    padding: const EdgeInsets.fromLTRB(16, 13, 14, 13),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              GradeRing(value: stats.average, size: 116),
-                              const SizedBox(width: 16),
-                              Flexible(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // passed
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          '${stats.passedCount}',
-                                          style: monoStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w700,
-                                            color: const Color(0xFF4FE0D2),
-                                          ),
-                                        ),
-                                        Text(
-                                          l10n.passed,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 11.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    // ECTS
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          '${stats.totalEcts}',
-                                          style: monoStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.amber,
-                                          ),
-                                        ),
-                                        Text(
-                                          l10n.ectsEarned,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 11.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    // last grade
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          lastGradeStr,
-                                          style: monoStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                        Text(
-                                          stats.lastGradeTitle ?? l10n.lastGrade,
-                                          textAlign: TextAlign.end,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 11.5,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                              Text(
+                                l10n.semester(semester),
+                                style: AppText.headline.copyWith(
+                                  color: p.label,
+                                ),
+                              ),
+                              Text(
+                                l10n.subjectCount(grades.length),
+                                style: AppText.footnote.copyWith(
+                                  color: p.secondaryLabel,
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Semester list
-                SliverPadding(
-                  padding: const EdgeInsets.all(12),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final semesterNum = semesters[index];
-                        final semesterGrades = groupedGrades[semesterNum]!;
-
-                        // Per-semester average, matching the selected mode.
-                        double semWeighted = 0;
-                        int semEcts = 0;
-                        double semSum = 0;
-                        int semGraded = 0;
-                        for (final g in semesterGrades) {
-                          if (g.passed && g.grade != null) {
-                            semSum += g.grade!;
-                            semGraded++;
-                            if (g.ects > 0) {
-                              semWeighted += g.grade! * g.ects;
-                              semEcts += g.ects;
-                            }
-                          }
-                        }
-                        final double? semAvg = weighted
-                            ? (semEcts > 0 ? semWeighted / semEcts : null)
-                            : (semGraded > 0 ? semSum / semGraded : null);
-
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
-                          child: ExpansionTile(
-                            initiallyExpanded: index == 0,
-                            tilePadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 4,
-                            ),
-                            title: Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: AppColors.coral,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        l10n.semester(semesterNum),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 15,
-                                        ),
-                                      ),
-                                      Text(
-                                        l10n.subjectCount(semesterGrades.length),
-                                        style: TextStyle(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                          fontSize: 11.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                if (semAvg != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(right: 8),
-                                    child: Text(
-                                      semAvg.toStringAsFixed(2),
-                                      style: monoStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.tealDeep,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            children: semesterGrades
-                                .map((grade) => _subjectRow(context, grade))
-                                .toList(),
+                        ),
+                        if (average != null)
+                          Text(
+                            average.toStringAsFixed(2),
+                            style: figures(
+                              AppText.headline,
+                            ).copyWith(color: p.secondaryLabel),
                           ),
-                        );
-                      },
-                      childCount: semesters.length,
+                        const SizedBox(width: 8),
+                        AnimatedRotation(
+                          turns: expanded ? 0.25 : 0,
+                          duration: duration,
+                          curve: Curves.easeOutCubic,
+                          child: Icon(
+                            CupertinoIcons.chevron_forward,
+                            size: 17,
+                            color: p.tertiaryLabel,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _averageToggle(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations l10n,
-    bool weighted,
-    List<Grade> grades,
-  ) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        onTap: () async {
-          await ref.read(averageWeightedProvider.notifier).toggle();
-          await WidgetService.syncFromGrades(grades);
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.swap_horiz,
-                size: 13,
-                color: Colors.white.withValues(alpha: 0.7),
               ),
-              const SizedBox(width: 6),
-              Text(
-                weighted ? l10n.weightedAverage : l10n.unweightedAverage,
-                style: monoStyle(
-                  fontSize: 10.5,
-                  letterSpacing: 1.6,
-                  color: Colors.white.withValues(alpha: 0.75),
-                ),
+              AnimatedSize(
+                duration: duration,
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: expanded
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (final grade in grades) _CourseRow(grade: grade),
+                        ],
+                      )
+                    : const SizedBox(width: double.infinity),
               ),
             ],
           ),
@@ -472,78 +360,83 @@ class GradesScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _subjectRow(BuildContext context, Grade grade) {
-    return Container(
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(color: Theme.of(context).dividerColor),
+class _CourseRow extends StatelessWidget {
+  final Grade grade;
+
+  const _CourseRow({required this.grade});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Container(height: 0.5, color: p.separator),
         ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  grade.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13.5,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 11, 14, 11),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      grade.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.callout.copyWith(color: p.label),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '${grade.code} · ${grade.ects} ECTS',
+                      style: figures(
+                        AppText.footnote,
+                      ).copyWith(color: p.secondaryLabel),
+                    ),
+                  ],
                 ),
-                Text(
-                  '${grade.code} · ${grade.ects} ECTS',
-                  style: monoStyle(
-                    fontSize: 11,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              _GradePill(grade: grade),
+            ],
           ),
-          const SizedBox(width: 12),
-          _gradeBadge(context, grade),
-        ],
-      ),
+        ),
+      ],
     );
   }
+}
 
-  Widget _gradeBadge(BuildContext context, Grade grade) {
-    final Color bgColor;
-    final Color textColor;
+class _GradePill extends StatelessWidget {
+  final Grade grade;
 
-    if (grade.grade == null) {
-      bgColor = Theme.of(context).colorScheme.surfaceContainerHighest;
-      textColor = Theme.of(context).colorScheme.onSurfaceVariant;
-    } else if (grade.passed) {
-      bgColor = AppColors.teal.withValues(alpha: 0.14);
-      textColor = AppColors.tealDeep;
-    } else {
-      bgColor = AppColors.coral.withValues(alpha: 0.14);
-      textColor = AppColors.coralDeep;
-    }
+  const _GradePill({required this.grade});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    final value = grade.grade;
+    final color = value == null
+        ? p.tertiaryLabel
+        : (grade.passed ? p.success : p.danger);
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 40),
-      height: 40,
+      constraints: const BoxConstraints(minWidth: 48),
+      height: 30,
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
       alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: value == null ? p.fill : color.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
       child: Text(
-        grade.grade?.toString() ?? '—',
-        style: monoStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.w700,
-          color: textColor,
-        ),
+        value?.toString() ?? '–',
+        style: figures(AppText.headline).copyWith(color: color),
       ),
     );
   }
