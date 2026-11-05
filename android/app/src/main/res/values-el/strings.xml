@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="grades_channel_description">Ειδοποιήσεις όταν βαθμολογείται ένα μάθημα που περιμένεις.</string>
+    <string name="grades_channel_name">Νέες βαθμολογίες</string>
+    <string name="menus_channel_description">Τα κυρίως πιάτα του εστιατορίου σου πριν από κάθε γεύμα.</string>
+    <string name="menus_channel_name">Μενού γευμάτων</string>
+</resources>

@@ -206,6 +206,18 @@ abstract class AppLocalizations {
   /// **'Log Out'**
   String get logOut;
 
+  /// No description provided for @menuNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal notifications'**
+  String get menuNotifications;
+
+  /// No description provided for @menuNotificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Main courses of your preferred restaurant, 2 hours before lunch and dinner.'**
+  String get menuNotificationsSubtitle;
+
   /// No description provided for @myGrades.
   ///
   /// In en, this message translates to:
@@ -241,6 +253,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No restaurants are available at the moment.'**
   String get noRestaurantsAvailable;
+
+  /// No description provided for @notificationsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsLabel;
+
+  /// No description provided for @notificationsSyncFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update notifications: {error}'**
+  String notificationsSyncFailed(Object error);
 
   /// No description provided for @orSeparator.
   ///

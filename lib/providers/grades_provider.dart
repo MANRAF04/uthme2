@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/grade.dart';
 import '../models/grades_snapshot.dart';
 import '../services/api_service.dart';
 import '../services/cache_service.dart';
+import '../services/push_service.dart';
 import '../services/widget_service.dart';
 
 typedef _Credentials = ({String username, String password});
@@ -97,6 +100,7 @@ class GradesNotifier extends AsyncNotifier<GradesSnapshot> {
 
     await CacheService.writeGrades(username, grades);
     await WidgetService.syncFromGrades(grades);
+    unawaited(PushService.ensureRegistered());
     return GradesSnapshot(grades: grades, fetchedAt: DateTime.now());
   }
 

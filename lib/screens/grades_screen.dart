@@ -8,6 +8,7 @@ import '../providers/grades_provider.dart';
 import '../models/grade.dart';
 import '../models/grade_stats.dart';
 import '../services/cache_service.dart';
+import '../services/push_service.dart';
 import '../services/widget_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/grade_ring.dart';
@@ -23,8 +24,12 @@ class GradesScreen extends ConsumerWidget {
     ref.invalidate(gradesProvider);
     const storage = FlutterSecureStorage();
     final username = (await storage.read(key: 'username'))?.trim();
+    final password = await storage.read(key: 'password');
 
     if (username != null && username.isNotEmpty) {
+      if (password != null && password.isNotEmpty) {
+        await PushService.unregister(username: username, password: password);
+      }
       await CacheService.clearGrades(username);
     }
     await storage.delete(key: 'username');

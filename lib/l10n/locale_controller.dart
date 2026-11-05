@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../services/push_service.dart';
 import 'app_localizations.dart';
 
 /// Secure-storage key holding the user's explicit language override.
@@ -59,5 +62,6 @@ class LocaleController extends Notifier<Locale?> {
     } else {
       await _storage.write(key: localeStorageKey, value: locale.languageCode);
     }
+    unawaited(PushService.refreshRegistration());
   }
 }
