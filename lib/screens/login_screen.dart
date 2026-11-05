@@ -1,10 +1,13 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+
 import '../l10n/app_localizations.dart';
 import '../services/api_service.dart';
 import '../theme/app_theme.dart';
-import 'grades_screen.dart';
+import '../widgets/buttons.dart';
+import 'home_shell.dart';
 import 'menu_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -21,40 +24,42 @@ class _LoginScreenState extends State<LoginScreen> {
   final _apiService = ApiService();
   bool _isLoading = false;
   bool _obscure = true;
+  String? _error;
 
   Future<void> _login() async {
+    final l10n = AppLocalizations.of(context);
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
 
     if (username.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).enterBothCredentials)),
-      );
+      setState(() => _error = l10n.enterBothCredentials);
       return;
     }
 
-    setState(() => _isLoading = true);
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
     try {
       await _apiService.fetchGrades(username, password, forceRefresh: false);
 
       await _storage.write(key: 'username', value: username);
       await _storage.write(key: 'password', value: password);
+      TextInput.finishAutofillContext();
 
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const GradesScreen()),
+        MaterialPageRoute(builder: (context) => const HomeShell()),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).loginFailed(e))),
-      );
+      HapticFeedback.heavyImpact();
+      setState(() => _error = l10n.loginFailed(e));
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -67,158 +72,201 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final p = context.palette;
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Top hero panel - edge to edge, rounded bottom corners only.
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.coral, AppColors.coralDeep],
-                  ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(AppRadius.xl),
-                    bottomRight: Radius.circular(AppRadius.xl),
-                  ),
-                ),
-                padding: const EdgeInsets.fromLTRB(26, 56, 26, 40),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 76,
-                        height: 76,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.16),
-                              blurRadius: 18,
-                              offset: const Offset(0, 6),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 88,
+                      height: 88,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.coral.withValues(
+                              alpha:
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? 0
+                                  : 0.3,
                             ),
-                          ],
-                        ),
-                        child: SvgPicture.asset(
-                          'assets/logo/uth_logo_dark.svg',
-                          width: 46,
-                          height: 46,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    Text(
-                      l10n.loginHeroTitle,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 26,
-                        height: 1.05,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      l10n.loginHeroSubtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.86),
-                        fontSize: 13.5,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Form area.
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 26, 22, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      controller: _usernameController,
-                      decoration: InputDecoration(
-                        labelText: l10n.usernameLabel,
-                        prefixIcon: const Icon(Icons.person_outline),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: _obscure,
-                      decoration: InputDecoration(
-                        labelText: l10n.password,
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          onPressed: () => setState(() => _obscure = !_obscure),
-                          icon: Icon(
-                            _obscure
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
+                            blurRadius: 24,
+                            offset: const Offset(0, 10),
                           ),
-                        ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset('assets/logo/app_icon_1024.png'),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: _isLoading ? null : _login,
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: Colors.white,
+                  ),
+                  const SizedBox(height: 28),
+                  Text(
+                    l10n.loginHeroTitle,
+                    textAlign: TextAlign.center,
+                    style: AppText.largeTitle.copyWith(
+                      color: p.label,
+                      height: 1.12,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    l10n.loginHeroSubtitle,
+                    textAlign: TextAlign.center,
+                    style: AppText.subheadline.copyWith(
+                      color: p.secondaryLabel,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  AutofillGroup(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: p.card,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                      child: Column(
+                        children: [
+                          _Field(
+                            controller: _usernameController,
+                            hint: l10n.usernameLabel,
+                            icon: CupertinoIcons.person,
+                            autofillHints: const [AutofillHints.username],
+                            textInputAction: TextInputAction.next,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 48),
+                            child: Container(height: 0.5, color: p.separator),
+                          ),
+                          _Field(
+                            controller: _passwordController,
+                            hint: l10n.password,
+                            icon: CupertinoIcons.lock,
+                            obscure: _obscure,
+                            autofillHints: const [AutofillHints.password],
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => _login(),
+                            suffix: GestureDetector(
+                              onTap: () => setState(() => _obscure = !_obscure),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                ),
+                                child: Icon(
+                                  _obscure
+                                      ? CupertinoIcons.eye_slash
+                                      : CupertinoIcons.eye,
+                                  size: 20,
+                                  color: p.secondaryLabel,
+                                ),
                               ),
-                            )
-                          : Text(l10n.logIn),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            l10n.orSeparator,
-                            style: TextStyle(
-                              color: cs.onSurfaceVariant,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
-                        const Expanded(child: Divider()),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const RestaurantMenuScreen(),
-                        ),
+                        ],
                       ),
-                      child: Text(l10n.browseDiningMenus),
                     ),
-                  ],
-                ),
+                  ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: _error == null
+                        ? const SizedBox(width: double.infinity, height: 20)
+                        : Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+                            child: Text(
+                              _error!,
+                              style: AppText.footnote.copyWith(color: p.danger),
+                            ),
+                          ),
+                  ),
+                  PrimaryButton(
+                    label: l10n.logIn,
+                    loading: _isLoading,
+                    onTap: _login,
+                  ),
+                  const SizedBox(height: 8),
+                  PlainButton(
+                    label: l10n.browseDiningMenus,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RestaurantMenuScreen(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _Field extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final IconData icon;
+  final bool obscure;
+  final Iterable<String> autofillHints;
+  final TextInputAction textInputAction;
+  final ValueChanged<String>? onSubmitted;
+  final Widget? suffix;
+
+  const _Field({
+    required this.controller,
+    required this.hint,
+    required this.icon,
+    required this.autofillHints,
+    required this.textInputAction,
+    this.obscure = false,
+    this.onSubmitted,
+    this.suffix,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+
+    return Row(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 16, right: 10),
+          child: Icon(icon, size: 22, color: p.secondaryLabel),
+        ),
+        Expanded(
+          child: TextField(
+            controller: controller,
+            obscureText: obscure,
+            autocorrect: false,
+            enableSuggestions: !obscure,
+            autofillHints: autofillHints,
+            textInputAction: textInputAction,
+            onSubmitted: onSubmitted,
+            style: AppText.body.copyWith(color: p.label),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: AppText.body.copyWith(color: p.tertiaryLabel),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 15),
+              isDense: true,
+            ),
+          ),
+        ),
+        ?suffix,
+      ],
     );
   }
 }

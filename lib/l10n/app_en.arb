@@ -1,7 +1,11 @@
 {
   "@@locale": "en",
+  "account": "Account",
   "appTitle": "UTHME2",
+  "averageSimple": "Simple",
+  "averageWeighted": "Weighted",
   "browseDiningMenus": "Browse dining menus",
+  "cancel": "Cancel",
   "change": "Change",
   "checkConnection": "Check your connection and try again.",
   "couldNotLoadMenu": "Could not load menu: {error}",
@@ -38,6 +42,8 @@
   "loginHeroSubtitle": "Sign in with your UTH account. We keep you logged in on this device.",
   "loginHeroTitle": "Grades and menu,\nin one tap.",
   "logOut": "Log Out",
+  "logOutConfirmMessage": "Your saved grades will be removed from this device.",
+  "logOutConfirmTitle": "Log out?",
   "menuNotifications": "Meal notifications",
   "menuNotificationsSubtitle": "Main courses of your preferred restaurant, 2 hours before lunch and dinner.",
   "myGrades": "My Grades",
@@ -76,7 +82,7 @@
       }
     }
   },
-  "servingNow": "SERVING NOW",
+  "servingNow": "Serving now",
   "settings": "Settings",
   "showingSavedGrades": "Showing saved grades",
   "showingSavedMenu": "Showing the saved menu",
@@ -89,6 +95,8 @@
     }
   },
   "systemDefault": "System default",
+  "tabGrades": "Grades",
+  "tabMenu": "Menu",
   "today": "Today",
   "tomorrow": "Tomorrow",
   "tryAgain": "Try Again",

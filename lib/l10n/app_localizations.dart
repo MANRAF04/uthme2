@@ -98,17 +98,41 @@ abstract class AppLocalizations {
     Locale('en'),
   ];
 
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
   /// **'UTHME2'**
   String get appTitle;
 
+  /// No description provided for @averageSimple.
+  ///
+  /// In en, this message translates to:
+  /// **'Simple'**
+  String get averageSimple;
+
+  /// No description provided for @averageWeighted.
+  ///
+  /// In en, this message translates to:
+  /// **'Weighted'**
+  String get averageWeighted;
+
   /// No description provided for @browseDiningMenus.
   ///
   /// In en, this message translates to:
   /// **'Browse dining menus'**
   String get browseDiningMenus;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
 
   /// No description provided for @change.
   ///
@@ -205,6 +229,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Log Out'**
   String get logOut;
+
+  /// No description provided for @logOutConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your saved grades will be removed from this device.'**
+  String get logOutConfirmMessage;
+
+  /// No description provided for @logOutConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log out?'**
+  String get logOutConfirmTitle;
 
   /// No description provided for @menuNotifications.
   ///
@@ -335,7 +371,7 @@ abstract class AppLocalizations {
   /// No description provided for @servingNow.
   ///
   /// In en, this message translates to:
-  /// **'SERVING NOW'**
+  /// **'Serving now'**
   String get servingNow;
 
   /// No description provided for @settings.
@@ -367,6 +403,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'System default'**
   String get systemDefault;
+
+  /// No description provided for @tabGrades.
+  ///
+  /// In en, this message translates to:
+  /// **'Grades'**
+  String get tabGrades;
+
+  /// No description provided for @tabMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu'**
+  String get tabMenu;
 
   /// No description provided for @today.
   ///

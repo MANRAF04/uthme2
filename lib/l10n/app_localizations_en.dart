@@ -9,10 +9,22 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get account => 'Account';
+
+  @override
   String get appTitle => 'UTHME2';
 
   @override
+  String get averageSimple => 'Simple';
+
+  @override
+  String get averageWeighted => 'Weighted';
+
+  @override
   String get browseDiningMenus => 'Browse dining menus';
+
+  @override
+  String get cancel => 'Cancel';
 
   @override
   String get change => 'Change';
@@ -70,6 +82,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logOut => 'Log Out';
+
+  @override
+  String get logOutConfirmMessage =>
+      'Your saved grades will be removed from this device.';
+
+  @override
+  String get logOutConfirmTitle => 'Log out?';
 
   @override
   String get menuNotifications => 'Meal notifications';
@@ -144,7 +163,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get servingNow => 'SERVING NOW';
+  String get servingNow => 'Serving now';
 
   @override
   String get settings => 'Settings';
@@ -168,6 +187,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get systemDefault => 'System default';
+
+  @override
+  String get tabGrades => 'Grades';
+
+  @override
+  String get tabMenu => 'Menu';
 
   @override
   String get today => 'Today';
