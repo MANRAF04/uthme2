@@ -95,3 +95,8 @@ desktop.ini
 
 # Headless screenshot output
 screenshots/**/*.png
+
+.claude/skills/
+
+# Logo design workspace (concepts, kit, generator)
+design/

@@ -93,7 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.coral.withValues(
+                            color: AppColors.teal.withValues(
                               alpha:
                                   Theme.of(context).brightness ==
                                       Brightness.dark
