@@ -5,12 +5,15 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  static const Color coral = Color(0xFFFF5436);
-  static const Color coralDark = Color(0xFFFF6B50);
+  static const Color teal = Color(0xFF0E5E66);
+
+  /// Brighter teal for dark mode, where the brand teal is too dim on black.
+  static const Color tealBright = Color(0xFF2A9DA6);
+  static const Color coral = Color(0xFFFF6B5A);
   static const Color amber = Color(0xFFFFB020);
 
   /// Ring gradient, coral to amber, used by the grade gauge.
-  static const List<Color> ringGradient = [coral, Color(0xFFFF8A3D), amber];
+  static const List<Color> ringGradient = [coral, Color(0xFFFF8E3D), amber];
 }
 
 class AppRadius {
@@ -64,8 +67,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     tertiaryLabel: Color(0x4D3C3C43),
     separator: Color(0x4A3C3C43),
     fill: Color(0x1F767680),
-    accent: AppColors.coral,
-    success: Color(0xFF0A8F84),
+    accent: AppColors.teal,
+    success: Color(0xFF34C759),
     danger: Color(0xFFFF3B30),
     warning: Color(0xFFFF9500),
     barBackground: Color(0xD9F9F9F9),
@@ -80,8 +83,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     tertiaryLabel: Color(0x4DEBEBF5),
     separator: Color(0xA6545458),
     fill: Color(0x3D767680),
-    accent: AppColors.coralDark,
-    success: Color(0xFF34D3C4),
+    accent: AppColors.tealBright,
+    success: Color(0xFF30D158),
     danger: Color(0xFFFF453A),
     warning: Color(0xFFFF9F0A),
     barBackground: Color(0xCC161618),
@@ -200,7 +203,7 @@ class AppTheme {
   static ThemeData _build(Brightness brightness, AppPalette p) {
     final scheme =
         ColorScheme.fromSeed(
-          seedColor: AppColors.coral,
+          seedColor: AppColors.teal,
           brightness: brightness,
         ).copyWith(
           primary: p.accent,

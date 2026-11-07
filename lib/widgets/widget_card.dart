@@ -78,7 +78,7 @@ class WidgetCard extends StatelessWidget {
                         _stat(
                           '${stats.passedCount}',
                           l10n.passed,
-                          const Color(0xFF34D3C4),
+                          const Color(0xFF30D158),
                         ),
                         const SizedBox(height: 8),
                         _stat(
